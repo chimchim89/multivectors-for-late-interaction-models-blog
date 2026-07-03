@@ -112,7 +112,7 @@
                     Most vector search systems reduce a document to a single point in space. It's a convenient design, one embedding per chunk, one comparison per query, and for a long time it was good enough. But convenience comes at a cost. Squeezing an entire document into one vector means squeezing away detail, and the moment a query cares about that detail, retrieval quality quietly breaks down.
                 </p>
                 <p class="mb-6">
-                    Late interaction models exist to fix exactly this problem. Instead of comparing one summary vector against another, they compare a document at the resolution it was actually written in: token by token. This post walks through why single-vector search falls short, how late interaction and ColBERT's MaxSim solve it, how to make that approach practical at scale, and how the same idea extends beyond text into visually rich documents through ColPali.
+                    Late interaction models exist to fix exactly this problem. Instead of comparing one summary vector against another, they compare a document at the resolution it was actually written in: token by token. This article walks through why single-vector search falls short, how late interaction and ColBERT's MaxSim solve it, how to make that approach practical at scale, and how the same idea extends beyond text into visually rich documents through ColPali.
                 </p>
 
                 <h2 class="text-2xl sm:text-3xl text-gray-800 mt-10 sm:mt-12 mb-4 sm:mb-6">2. The Problem With a Single Vector</h2>
