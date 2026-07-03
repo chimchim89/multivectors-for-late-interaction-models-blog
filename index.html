@@ -129,14 +129,6 @@
                 <p class="mb-6">
                     For example, sometimes a query spans multiple concepts, like economic policy and renewable energy at the same time, and those concepts might be covered in different parts of a document chunk that we embedded. When we encode that document into a single embedding, the model blends all of its meanings into one vector.
                 </p>
-                <figure>
-                  <img src="images/query.png" alt="brief description">
-                  <figcaption></figcaption>
-                </figure><br>
-                <figure>
-                  <img src="images/document.png" alt="brief description">
-                  <figcaption></figcaption>
-                </figure><br>
                 <p class="mb-6">
                     We already know that works, up to a point. But that averaging effect can dilute the specific signals a query is trying to match, especially when the underlying concepts aren't closely related. So even if a document is a great fit for part of a query, it might not get retrieved at all because of this blending.
                 </p>
@@ -155,10 +147,6 @@
                 <p class="mb-6">
                     Late interaction fixes this by keeping the document at token resolution, instead of collapsing it into one vector.
                 </p>
-                <figure>
-                  <img src="images/multivector.png" alt="brief description">
-                  <figcaption></figcaption>
-                </figure><br>
                 <p class="mb-6">
                     ColBERT is one of the best known late interaction models, so let's take a closer look at how it actually works.
                 </p>
@@ -177,10 +165,6 @@
                 <p class="mb-6">
                     Checking every query token against every document token is heavier than a single vector lookup. So in practice, this method runs in two stages.
                 </p>
-                <figure>
-                  <img src="images/reranking.png" alt="brief description">
-                  <figcaption></figcaption>
-                </figure><br>
                 <p class="mb-6">
                     First, we recall a large set of candidate documents quickly using a dense vector, for example 200 documents. Then we rerank those candidates with the interaction model for accuracy, narrowing down to a top final result, for example 10 documents.
                 </p>
