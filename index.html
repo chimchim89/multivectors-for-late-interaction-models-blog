@@ -141,10 +141,7 @@
 
                 <h2 class="text-2xl sm:text-3xl text-gray-800 mt-10 sm:mt-12 mb-4 sm:mb-6">3. Late Interaction: Keeping Token Resolution</h2>
                 <p class="mb-6">
-                    Late interaction fixes this by keeping the document at token resolution, instead of collapsing it into one vector.
-                </p>
-                <p class="mb-6">
-                    ColBERT is one of the best known late interaction models, so let's take a closer look at how it actually works.
+                    Late interaction fixes this by keeping the document at token resolution, instead of collapsing it into one vector. ColBERT is one of the best known late interaction models, so let's take a closer look at how it actually works.
                 </p>
                 <figure>
                   <img src="images/colbert.png" alt="brief description">
@@ -161,19 +158,23 @@
                 <p class="mb-6">
                     Checking every query token against every document token is heavier than a single vector lookup. So in practice, this method runs in two stages.
                 </p>
+                <figure>
+                  <img src="images/rerank.png" alt="brief description">
+                  <figcaption></figcaption>
+                </figure><br>
                 <p class="mb-6">
-                    First, we recall a large set of candidate documents quickly using a dense vector, for example 200 documents. Then we rerank those candidates with the interaction model for accuracy, narrowing down to a top final result, for example 10 documents.
+                    First, we recall a large set of candidate documents quickly using a dense vector, for example 200 documents. Then we rerank those candidates with late interaction model for accuracy, narrowing down to a top final result, for example 10 documents.
                 </p>
                 <p class="mb-6">
                     In practice this means we end up with two named vectors per point: a standard dense field for fast recall, and a multivector field for the token embeddings, where MaxSim is applied.
                 </p>
 
-                <h3 class="text-xl sm:text-2xl text-gray-800 mt-8 sm:mt-10 mb-3 sm:mb-4">Setting It Up in Qdrant</h3>
+                <h3 class="text-xl sm:text-2xl text-gray-800 mt-8 sm:mt-10 mb-3 sm:mb-4">Setting It Up in Practice</h3>
                 <p class="mb-6">
-                    We can call our multivector field <code>colbert</code>, after the model we're using. And we don't need to index this multivector field, because we're only going to use it to rerank candidates, a very small portion of results is ever touched by it.
+                    We can name our multivector field colbert, after the model we're using. And we typically don't need to index this multivector field, because we're only going to use it to rerank candidates, a very small portion of results is ever touched by it.
                 </p>
                 <p class="mb-6">
-                    To populate the multivector field, we need token-level embeddings from a late interaction model, in this case ColBERT. This can be done using FastEmbed with the late interaction text embedding method.
+                    To populate the multivector field, we need token-level embeddings from a late interaction model, in this case ColBERT. This can be done using an embedding library like FastEmbed(Qdrant), which supports the late interaction text embedding method.
                 </p>
                 <p class="mb-6">
                     At query time: first, we retrieve 200 points using our dense vector. Then, we rerank those points using ColBERT to get our final top 10 best matches, all in one single request.
