@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Blog | Multivectors for Late Interaction Models</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: 'Times New Roman', Times, Georgia, serif;
+            background-color: #ffffff;
+            color: #1a1a1a;
+        }
+        .serif-heading {
+            font-family: 'Times New Roman', Times, Georgia, serif;
+            letter-spacing: -0.02em;
+        }
+        .gradient-button {
+            background: linear-gradient(135deg, #fdfbfb 0%, #ebedee 100%);
+            border: 1px solid #e2e8f0;
+            transition: all 0.2s ease;
+        }
+        .gradient-button:hover {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            transform: translateY(-1px);
+        }
+        .nav-container {
+            backdrop-filter: blur(8px);
+            background: rgba(255, 255, 255, 0.8);
+            border: 1px solid rgba(0, 0, 0, 0.05);
+            border-radius: 999px;
+        }
+        .prose h1, .prose h2, .prose h3 {
+            font-family: 'Times New Roman', Times, Georgia, serif;
+            letter-spacing: -0.02em;
+        }
+        .prose p {
+            color: #4a4a4a;
+            line-height: 1.8;
+        }
+        .prose a {
+            color: #1a1a1a;
+            text-decoration: underline;
+            text-underline-offset: 3px;
+        }
+        .prose blockquote {
+            border-left: 2px solid #e2e8f0;
+            padding-left: 1.5rem;
+            color: #6b6b6b;
+            font-style: italic;
+        }
+        .prose code {
+            background: #f5f5f5;
+            padding: 0.125rem 0.375rem;
+            border-radius: 0.25rem;
+            font-size: 0.875em;
+        }
+        .prose pre {
+            background: #f8f8f8;
+            padding: 1rem 1.25rem;
+            border-radius: 0.5rem;
+            overflow-x: auto;
+        }
+        .prose pre code {
+            background: none;
+            padding: 0;
+        }
+        .prose img {
+            max-width: 100%;
+            height: auto;
+        }
+        @media (max-width: 640px) {
+            .serif-heading {
+                font-size: 1.875rem;
+            }
+            h2 {
+                font-size: 1.5rem !important;
+            }
+            h3 {
+                font-size: 1.25rem !important;
+            }
+            .prose p {
+                font-size: 0.95rem;
+                line-height: 1.7;
+            }
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col items-center">
+
+    <main class="flex-1 w-full max-w-3xl mx-auto px-4 sm:px-6 pt-12 sm:pt-16 pb-16 sm:pb-20">
+
+        <article>
+            <header class="mb-16 text-center">
+                <div class="mb-6 px-4 py-1 border border-gray-100 bg-gray-50 rounded-full text-[10px] tracking-[0.2em] text-gray-400 uppercase font-semibold inline-block">
+                    Article
+                </div>
+                <h1 class="serif-heading text-3xl sm:text-4xl md:text-5xl lg:text-6xl text-gray-800 leading-tight mb-6">
+                    Multivectors for Late Interaction Models
+                </h1>
+                <div class="flex items-center justify-center gap-4 text-sm text-gray-400">
+                    <time datetime="2026-06-17">July 2, 2026</time>
+                    <span>·</span>
+                    <span>8 min read</span>
+                </div>
+            </header>
+
+            <div class="prose prose-lg mx-auto">
+
+                <h2 class="text-2xl sm:text-3xl text-gray-800 mt-10 sm:mt-12 mb-4 sm:mb-6">1. Introduction</h2>
+                <p class="mb-6">
+                    Most vector search systems reduce a document to a single point in space. It's a convenient design, one embedding per chunk, one comparison per query, and for a long time it was good enough. But convenience comes at a cost. Squeezing an entire document into one vector means squeezing away detail, and the moment a query cares about that detail, retrieval quality quietly breaks down.
+                </p>
+                <p class="mb-6">
+                    Late interaction models exist to fix exactly this problem. Instead of comparing one summary vector against another, they compare a document at the resolution it was actually written in: token by token. This post walks through why single-vector search falls short, how late interaction and ColBERT's MaxSim solve it, how to make that approach practical at scale, and how the same idea extends beyond text into visually rich documents through ColPali.
+                </p>
+
+                <h2 class="text-2xl sm:text-3xl text-gray-800 mt-10 sm:mt-12 mb-4 sm:mb-6">2. The Problem With a Single Vector</h2>
+                <p class="mb-6">
+                    Think about how we've handled documents so far. We compress each chunk, entire content, into a single embedding.
+                </p>
+                <figure>
+                  <img src="images/deep_neural_net.png" alt="brief description">
+                  <figcaption></figcaption>
+                </figure>
+                <p class="mb-6">
+                    That single vector is a nice summary, but summaries blur detail. If your query mentions two specific terms and the document covers several topics, the single vector for a document might not line up clearly with every part of your query.
+                </p>
+                <p class="mb-6">
+                    For example, sometimes a query spans multiple concepts, like economic policy and renewable energy at the same time, and those concepts might be covered in different parts of a document chunk that we embedded. When we encode that document into a single embedding, the model blends all of its meanings into one vector.
+                </p>
+                <figure>
+                  <img src="images/query.png" alt="brief description">
+                  <figcaption></figcaption>
+                </figure><br>
+                <figure>
+                  <img src="images/document.png" alt="brief description">
+                  <figcaption></figcaption>
+                </figure><br>
+                <p class="mb-6">
+                    We already know that works, up to a point. But that averaging effect can dilute the specific signals a query is trying to match, especially when the underlying concepts aren't closely related. So even if a document is a great fit for part of a query, it might not get retrieved at all because of this blending.
+                </p>
+                <p class="mb-6">
+                    Cosine similarity makes this concrete. Imagine a query vector and a document vector, each with several dimensions:
+                </p>
+                <figure>
+                  <img src="images/averaging_effect.png" alt="brief description">
+                  <figcaption></figcaption>
+                </figure><br>
+                <p class="mb-6">
+                    A single dimension with a large, opposite-sign value can pull the overall score down, even when most of the other dimensions align well. One bad mismatch buried inside an otherwise strong match is enough to sink the ranking.
+                </p>
+
+                <h2 class="text-2xl sm:text-3xl text-gray-800 mt-10 sm:mt-12 mb-4 sm:mb-6">3. Late Interaction: Keeping Token Resolution</h2>
+                <p class="mb-6">
+                    Late interaction fixes this by keeping the document at token resolution, instead of collapsing it into one vector.
+                </p>
+                <figure>
+                  <img src="images/multivector.png" alt="brief description">
+                  <figcaption></figcaption>
+                </figure><br>
+                <p class="mb-6">
+                    ColBERT is one of the best known late interaction models, so let's take a closer look at how it actually works.
+                </p>
+                <figure>
+                  <img src="images/colbert.png" alt="brief description">
+                  <figcaption></figcaption>
+                </figure><br>
+                <p class="mb-6">
+                    The query encoder generates a small embedding for each token in the query, and the document encoder generates embeddings for each token in the document.
+                </p>
+                <p class="mb-6">
+                    At query time, ColBERT performs the late interaction scoring. It takes every query token embedding and compares it against all of the document's token embeddings, finding the one that's most similar. That's what's called <strong>MaxSim</strong>. It keeps only the highest score per query token, then sums up all of those scores into what's called the <strong>relevance score</strong>.
+                </p>
+
+                <h2 class="text-2xl sm:text-3xl text-gray-800 mt-10 sm:mt-12 mb-4 sm:mb-6">4. Making It Practical: A Two-Stage Pipeline</h2>
+                <p class="mb-6">
+                    Checking every query token against every document token is heavier than a single vector lookup. So in practice, this method runs in two stages.
+                </p>
+                <figure>
+                  <img src="images/reranking.png" alt="brief description">
+                  <figcaption></figcaption>
+                </figure><br>
+                <p class="mb-6">
+                    First, we recall a large set of candidate documents quickly using a dense vector, for example 200 documents. Then we rerank those candidates with the interaction model for accuracy, narrowing down to a top final result, for example 10 documents.
+                </p>
+                <p class="mb-6">
+                    In practice this means we end up with two named vectors per point: a standard dense field for fast recall, and a multivector field for the token embeddings, where MaxSim is applied.
+                </p>
+
+                <h3 class="text-xl sm:text-2xl text-gray-800 mt-8 sm:mt-10 mb-3 sm:mb-4">Setting It Up in Qdrant</h3>
+                <p class="mb-6">
+                    We can call our multivector field <code>colbert</code>, after the model we're using. And we don't need to index this multivector field, because we're only going to use it to rerank candidates, a very small portion of results is ever touched by it.
+                </p>
+                <p class="mb-6">
+                    To populate the multivector field, we need token-level embeddings from a late interaction model, in this case ColBERT. This can be done using FastEmbed with the late interaction text embedding method.
+                </p>
+                <p class="mb-6">
+                    At query time: first, we retrieve 200 points using our dense vector. Then, we rerank those points using ColBERT to get our final top 10 best matches, all in one single request.
+                </p>
+
+                <h2 class="text-2xl sm:text-3xl text-gray-800 mt-10 sm:mt-12 mb-4 sm:mb-6">5. ColPali: Late Interaction for Visual Documents</h2>
+                <p class="mb-6">
+                    For documents with rich layouts, like PDFs, invoices, slide decks, and articles, there's ColPali, which stands for <strong>Contextualized Late Interaction over PaliGemma</strong>. It applies the same idea as ColBERT, but to vision.
+                </p>
+                <figure>
+                  <img src="images/colpali.png" alt="brief description">
+                  <figcaption></figcaption>
+                </figure><br>
+                <p class="mb-6">
+                    ColPali divides each page into a grid of patches, encodes each patch with a vision-language model, and treats those patch embeddings as sub-vectors. You use the identical multivector configuration, and at query time MaxSim is applied across layout regions instead of text tokens.
+                </p>
+
+                <h2 class="text-2xl sm:text-3xl text-gray-800 mt-10 sm:mt-12 mb-4 sm:mb-6">6. The Core Idea, In Short</h2>
+                <p class="mb-6">
+                    A single vector is a summary of a document. Late interaction is per-token matching. Each query token contributes its best similarity to the document, and the sum of those contributions is the relevance score.
+                </p>
+                <p class="mb-6">
+                    A great way to take advantage of this at scale is to run it in two stages: fast recall with a dense vector, then precise reranking with multivectors and late interaction.
+                </p>
+
+                <h2 class="text-2xl sm:text-3xl text-gray-800 mt-10 sm:mt-12 mb-4 sm:mb-6">7. Conclusion</h2>
+                <p class="mb-6">
+                    Single-vector search will always trade away detail for convenience. That trade-off is fine until a query needs precision that a blended, averaged embedding simply can't offer. Late interaction models like ColBERT close that gap by keeping documents at token resolution and letting each query token find its own best match, rather than forcing everything through one compressed representation.
+                </p>
+                <p class="mb-6">
+                    The two-stage pattern, fast dense recall followed by precise multivector reranking, is what makes this practical rather than just theoretically appealing. It gives you the speed of dense retrieval and the precision of token-level matching, without paying the full cost of exhaustive late interaction across an entire collection.
+                </p>
+                <p class="mb-6">
+                    And with ColPali, the same idea stops being text-only. Treating a page as a grid of visual patches means layout-heavy documents, PDFs, slide decks, invoices, can be searched with the same rigor as plain text. Multivectors, in the end, aren't a niche trick. They're what search looks like when it stops summarizing and starts actually reading.
+                </p>
+
+            </div>
+
+        </article>
+
+    </main>
+
+    <footer class="py-12 text-center text-sm text-gray-400">
+        <p>Written with love by Achal</p>
+    </footer>
+
+</body>
+</html>
